@@ -1,0 +1,121 @@
+-- ===========================
+--   BASISENTITÄTEN
+-- ===========================
+
+CREATE TABLE Zimmerkategorie (
+    KategorieID      INT PRIMARY KEY,
+    Name             VARCHAR(100) NOT NULL,
+    Beschreibung     TEXT,
+    Kapazitaet       INT NOT NULL
+);
+
+CREATE TABLE Hotel (
+    HotelID          INT PRIMARY KEY,
+    Name             VARCHAR(200) NOT NULL,
+    Adresse          VARCHAR(200),
+    Stadt            VARCHAR(100),
+    Land             VARCHAR(100),
+    Sterne           INT,
+    KategorieID      INT NOT NULL,
+    CONSTRAINT fk_hotel_kategorie
+        FOREIGN KEY (KategorieID)
+        REFERENCES Zimmerkategorie(KategorieID)
+);
+
+CREATE TABLE Veranstalter (
+    VeranstalterID   INT PRIMARY KEY,
+    Name             VARCHAR(200) NOT NULL,
+    Kontakt_Email    VARCHAR(200),
+    Kontakt_Telefon  VARCHAR(50),
+    Steuernummer     VARCHAR(50)
+);
+
+CREATE TABLE Flug (
+    FlugID           INT PRIMARY KEY,
+    Flugnummer       VARCHAR(50),
+    Abflug           VARCHAR(100),
+    Ankunft          VARCHAR(100),
+    Abflugzeit       TIME,
+    Ankunftszeit     TIME
+);
+
+CREATE TABLE Transfer (
+    TransferID       INT PRIMARY KEY,
+    Von              VARCHAR(100),
+    Nach             VARCHAR(100),
+    Dauer            INT
+);
+
+CREATE TABLE Reisepaket (
+    PaketID          INT PRIMARY KEY,
+    Titel            VARCHAR(200) NOT NULL,
+    Grundpreis       DECIMAL(10,2) NOT NULL,
+    Dauer_Tage       INT NOT NULL,
+    Gueltig_von      DATE,
+    Gueltig_bis      DATE,
+    VeranstalterID   INT NOT NULL,
+    CONSTRAINT fk_reisepaket_veranstalter
+        FOREIGN KEY (VeranstalterID)
+        REFERENCES Veranstalter(VeranstalterID)
+);
+
+-- ===========================
+--   M:N AUFLÖSUNG
+-- ===========================
+
+CREATE TABLE Reisepaket_Hotel (
+    PaketID          INT NOT NULL,
+    HotelID          INT NOT NULL,
+    PRIMARY KEY (PaketID, HotelID),
+    CONSTRAINT fk_rp_hotel_paket
+        FOREIGN KEY (PaketID) REFERENCES Reisepaket(PaketID),
+    CONSTRAINT fk_rp_hotel_hotel
+        FOREIGN KEY (HotelID) REFERENCES Hotel(HotelID)
+);
+
+CREATE TABLE Reisepaket_Flug (
+    PaketID          INT NOT NULL,
+    FlugID           INT NOT NULL,
+    PRIMARY KEY (PaketID, FlugID),
+    CONSTRAINT fk_rp_flug_paket
+        FOREIGN KEY (PaketID) REFERENCES Reisepaket(PaketID),
+    CONSTRAINT fk_rp_flug_flug
+        FOREIGN KEY (FlugID) REFERENCES Flug(FlugID)
+);
+
+CREATE TABLE Reisepaket_Transfer (
+    PaketID          INT NOT NULL,
+    TransferID       INT NOT NULL,
+    PRIMARY KEY (PaketID, TransferID),
+    CONSTRAINT fk_rp_transfer_paket
+        FOREIGN KEY (PaketID) REFERENCES Reisepaket(PaketID),
+    CONSTRAINT fk_rp_transfer_transfer
+        FOREIGN KEY (TransferID) REFERENCES Transfer(TransferID)
+);
+
+-- ===========================
+--   KUNDE + BUCHUNG
+-- ===========================
+
+CREATE TABLE Kunde (
+    KundenID         INT PRIMARY KEY,
+    Name             VARCHAR(200) NOT NULL,
+    Adresse          VARCHAR(200),
+    Alter            INT,
+    Telefonnummer    VARCHAR(50),
+    Email            VARCHAR(200)
+);
+
+CREATE TABLE Buchung (
+    BuchungsID       INT PRIMARY KEY,
+    Datum            DATE NOT NULL,
+    Status           VARCHAR(50),
+    Gesamtpreis      DECIMAL(10,2),
+    Zahlungsart      VARCHAR(100),
+    KundenID         INT NOT NULL,
+    PaketID          INT NOT NULL,
+    CONSTRAINT fk_buchung_kunde
+        FOREIGN KEY (KundenID) REFERENCES Kunde(KundenID),
+    CONSTRAINT fk_buchung_paket
+        FOREIGN KEY (PaketID) REFERENCES Reisepaket(PaketID)
+);
